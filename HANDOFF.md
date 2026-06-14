@@ -21,7 +21,7 @@ Pubblicazione su **Apple App Store**.
 - **Stato**: Zustand + persist (AsyncStorage). È l'astrazione dati: verrà sostituita/affiancata da Supabase + PowerSync.
 - **Icone**: `lucide-react-native` (+ `react-native-svg`).
 - **TypeScript** strict ovunque.
-- Dir locale: `C:\Users\pasqu\Downloads\cambusa` (repo git già inizializzato, NON ancora committato/pushato).
+- Dir locale: `C:\Users\pasqu\Downloads\cambusa`. Repo GitHub **pubblico**: https://github.com/mar8co/cambusa (branch `main`).
 
 ## 4. Struttura attuale
 ```
