@@ -12,40 +12,40 @@ import { Text } from './ui/Text';
 
 export function AuthScreen() {
   const { palette } = useTheme();
-  const [step, setStep] = useState<'email' | 'code'>('email');
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
-  const sendCode = async () => {
-    if (!supabase || !email.includes('@')) {
-      setError('Inserisci un’email valida');
+  const submit = async () => {
+    if (!supabase) return;
+    if (!email.includes('@')) return setError('Inserisci un’email valida');
+    if (password.length < 6) return setError('La password deve avere almeno 6 caratteri');
+
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+
+    const creds = { email: email.trim(), password };
+    const { data, error } =
+      mode === 'signin'
+        ? await supabase.auth.signInWithPassword(creds)
+        : await supabase.auth.signUp(creds);
+
+    setBusy(false);
+
+    if (error) {
+      setError(error.message);
       return;
     }
-    setBusy(true);
-    setError(null);
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { shouldCreateUser: true },
-    });
-    setBusy(false);
-    if (error) setError(error.message);
-    else setStep('code');
-  };
-
-  const verify = async () => {
-    if (!supabase) return;
-    setBusy(true);
-    setError(null);
-    const { error } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: code.trim(),
-      type: 'email',
-    });
-    setBusy(false);
-    if (error) setError(error.message);
-    // al successo onAuthStateChange aggiorna la sessione e si entra nell'app
+    // Se la conferma email è attiva, lo signup non restituisce subito la sessione.
+    if (mode === 'signup' && !data.session) {
+      setInfo('Account creato. Se richiesto, conferma l’email e poi accedi.');
+      setMode('signin');
+    }
+    // Al successo onAuthStateChange aggiorna la sessione ed entra nell'app.
   };
 
   return (
@@ -72,46 +72,52 @@ export function AuthScreen() {
           </Text>
         </View>
 
-        {step === 'email' ? (
-          <View style={{ gap: space.md }}>
-            <Input
-              placeholder="La tua email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              value={email}
-              onChangeText={setEmail}
-              onSubmitEditing={sendCode}
-              returnKeyType="go"
-            />
-            <Button title="Invia codice" onPress={sendCode} loading={busy} />
-          </View>
-        ) : (
-          <View style={{ gap: space.md }}>
-            <Text variant="caption" color="inkSoft" style={{ textAlign: 'center' }}>
-              Ti abbiamo inviato un codice a {email}
-            </Text>
-            <Input
-              placeholder="Codice a 6 cifre"
-              keyboardType="number-pad"
-              value={code}
-              onChangeText={setCode}
-              onSubmitEditing={verify}
-              returnKeyType="go"
-              maxLength={6}
-              style={{ textAlign: 'center', letterSpacing: 8 }}
-            />
-            <Button title="Entra" onPress={verify} loading={busy} />
-            <Pressable onPress={() => setStep('email')} style={{ alignItems: 'center', padding: space.sm }}>
-              <Text variant="label" color="inkSoft">
-                Cambia email
-              </Text>
-            </Pressable>
-          </View>
-        )}
+        <View style={{ gap: space.md }}>
+          <Input
+            placeholder="Email"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="emailAddress"
+            value={email}
+            onChangeText={setEmail}
+          />
+          <Input
+            placeholder="Password"
+            secureTextEntry
+            autoCapitalize="none"
+            textContentType="password"
+            value={password}
+            onChangeText={setPassword}
+            onSubmitEditing={submit}
+            returnKeyType="go"
+          />
+          <Button
+            title={mode === 'signin' ? 'Accedi' : 'Crea account'}
+            onPress={submit}
+            loading={busy}
+          />
+        </View>
 
+        <Pressable
+          onPress={() => {
+            setMode((m) => (m === 'signin' ? 'signup' : 'signin'));
+            setError(null);
+            setInfo(null);
+          }}
+          style={{ alignItems: 'center', padding: space.md }}>
+          <Text variant="label" color="inkSoft">
+            {mode === 'signin' ? 'Non hai un account? Registrati' : 'Hai già un account? Accedi'}
+          </Text>
+        </Pressable>
+
+        {info ? (
+          <Text variant="caption" color="good" style={{ textAlign: 'center' }}>
+            {info}
+          </Text>
+        ) : null}
         {error ? (
-          <Text variant="caption" color="danger" style={{ textAlign: 'center', marginTop: space.md }}>
+          <Text variant="caption" color="danger" style={{ textAlign: 'center' }}>
             {error}
           </Text>
         ) : null}

@@ -62,16 +62,16 @@ src/
 - **Backend/auth scaffolding** (in attesa delle credenziali Supabase):
   - `supabase/schema.sql`: schema normalizzato completo (households, household_members, products_catalog+pgvector+trgm, pantry_items/shopping_items con base-unit + soft delete, receipts/receipt_lines, recipes, cook_log, user_settings), **RLS** per-household via `my_household_ids()`, **trigger signup** che crea household+membership+settings.
   - `src/lib/supabase.ts`: client con persistenza AsyncStorage; `isSupabaseConfigured` → se mancano le env l'app resta **offline-first** con i dati seed.
-  - `src/hooks/useAuth.ts` + `src/components/AuthScreen.tsx`: login **email OTP a 6 cifre** (no deep-link, ok in Expo Go); gate in `_layout.tsx` (loading → Auth se configurato e non loggato → app).
+  - `src/hooks/useAuth.ts` + `src/components/AuthScreen.tsx`: login **email + password** (signin/signup, ok in Expo Go senza template email né deep-link); gate in `_layout.tsx` (loading → Auth se configurato e non loggato → app). NB: l'OTP a codice è stato scartato perché la modifica dei template email su Supabase è bloccata dietro il piano Pro.
   - `.env.example` (committabile) con `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY`. `.env.local` è gitignored e NON presente: crearlo dalle credenziali reali.
 - `npx tsc --noEmit` pulito.
 
 ### Setup Supabase (da fare dall'utente)
 1. supabase.com → New project (regione EU). Annota Project URL e anon key (Settings → API).
 2. SQL Editor → incolla ed esegui `supabase/schema.sql`.
-3. Authentication → Providers → Email: abilita; per OTP a codice disattiva "Confirm email" link e tieni l'OTP (default invia un codice).
+3. Authentication → Email: **disattiva "Confirm email"** (toggle, gratis) così lo signup dà subito la sessione senza inviare email.
 4. In locale: copia `.env.example` → `.env.local`, inserisci URL + anon key.
-5. `npm start`, apri in Expo Go: comparirà la schermata di login. Inserisci email → ricevi codice → entra.
+5. `npm start`, apri in Expo Go: comparirà la schermata di login (email + password). Registrati una volta, poi accedi.
 
 ## 7. TODO (roadmap)
 1. **Auth + Supabase nuovo**: creare progetto, schema normalizzato (households, products_catalog+pgvector, pantry_items con base-unit + soft delete, shopping, receipts/lines, recipes). Wiring client + login (magic-link/Apple).
